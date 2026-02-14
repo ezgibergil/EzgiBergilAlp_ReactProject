@@ -38,10 +38,16 @@ export default function SongList() {
   const fetchTopSongs = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://itunes.apple.com/search?term=pop&media=music&limit=10");
+      const res = await fetch("https://itunes.apple.com/search?term=pop&entity=song&limit=10");
+      if (!res.ok) throw new Error(`Sunucu Hatası: ${res.status}`);
       const data = await res.json();
       setSongs(data.results || []);
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+    } catch (err) { 
+      // Bu alert mobilde hatayı görmeni sağlar
+      alert("Hata Detayı: " + err.message); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleSearch = async (term) => {
