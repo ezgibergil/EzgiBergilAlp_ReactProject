@@ -4,7 +4,7 @@ Bu proje, bir web geliştirme staj programı kapsamında, modern web teknolojile
 
 ## 🚀 Canlı Demo
 Uygulamanın yayındaki haline buradan ulaşabilirsiniz:  
-[**Netlify Canlı Linkini Buraya Yapıştır**]
+https://moodify-song-app.netlify.app/
 
 ---
 
