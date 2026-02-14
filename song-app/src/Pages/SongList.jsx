@@ -22,29 +22,36 @@ export default function SongList() {
   const navigate = useNavigate();
   const [songs, setSongs] = useState([]);
   const [moodSongs, setMoodSongs] = useState(() => {
-    const saved = localStorage.getItem(`moodSongs-${mood}`);
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem(`moodSongs-${mood}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef(null);
 
+  // localStorage güncelleme
   useEffect(() => {
     localStorage.setItem(`moodSongs-${mood}`, JSON.stringify(moodSongs));
   }, [moodSongs, mood]);
 
-  useEffect(() => { fetchTopSongs(); }, [mood]);
+  // İlk açılışta popüler şarkıları getir
+  useEffect(() => { 
+    fetchTopSongs(); 
+  }, [mood]);
 
   const fetchTopSongs = async () => {
     setLoading(true);
     try {
+      // Netlify'da sorun çıkmaması için https ve entity=song kullandık
       const res = await fetch("https://itunes.apple.com/search?term=pop&entity=song&limit=10");
-      if (!res.ok) throw new Error(`Sunucu Hatası: ${res.status}`);
       const data = await res.json();
       setSongs(data.results || []);
     } catch (err) { 
-      // Bu alert mobilde hatayı görmeni sağlar
-      alert("Hata Detayı: " + err.message); 
+      console.error("Hata:", err); 
     } finally { 
       setLoading(false); 
     }
@@ -54,12 +61,17 @@ export default function SongList() {
     if (!term.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&limit=10`);
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=10`);
       const data = await res.json();
       setSongs(data.results || []);
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+    } catch (err) { 
+      console.error("Hata:", err); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
+  // Debounce mekanizması
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -81,52 +93,81 @@ export default function SongList() {
   const textColor = TEXT_COLORS[mood] || TEXT_COLORS.default;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${MOOD_BG[mood] || MOOD_BG.default} p-6 font-sans ${textColor}`}>
+    <div className={`min-h-screen bg-gradient-to-br ${MOOD_BG[mood] || MOOD_BG.default} p-4 md:p-10 font-sans ${textColor}`}>
       <header className="max-w-4xl mx-auto flex items-center justify-between mb-8">
-        <button onClick={() => navigate(-1)} className="text-2xl bg-white/50 p-2 rounded-full shadow-sm hover:bg-white transition">←</button>
+        <button onClick={() => navigate(-1)} className="text-2xl bg-white/50 p-3 rounded-full shadow-md hover:bg-white transition-all active:scale-95">←</button>
         <div className="text-right">
-          <h1 className="text-2xl font-black capitalize tracking-tight">{mood} Hislerin!</h1>
-          <p className="text-[10px] font-medium opacity-70">Bugün seninle aynı hisse sahip şarkılar</p>
+          <h1 className="text-3xl font-black capitalize tracking-tight">{mood} Modun!</h1>
+          <p className="text-xs font-medium opacity-70">Senin için seçtiğimiz parçalar</p>
         </div>
       </header>
 
-      <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+      <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        {/* SOL KOLON: ARAMA VE ŞARKILAR */}
         <div className="space-y-4">
           <input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Şarkı veya sanatçı ara..."
-            className="w-full bg-white/60 border border-white/40 rounded-2xl px-5 py-4 outline-none placeholder-slate-400 text-slate-800 shadow-sm focus:bg-white transition"
+            className="w-full bg-white/70 border border-white/50 rounded-2xl px-6 py-4 outline-none placeholder-slate-400 text-slate-800 shadow-lg focus:bg-white transition-all"
           />
 
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
-            {songs.map((song) => (
-              <div key={song.trackId} className="flex items-center gap-4 bg-white/40 p-3 rounded-2xl border border-white/20 hover:bg-white/60 transition group">
-                <img src={song.artworkUrl100} className="w-12 h-12 rounded-xl" alt="cover"/>
-                <div className="flex-1">
-                  <p className="font-bold text-sm line-clamp-1 text-slate-800">{song.trackName}</p>
-                  <p className="text-[10px] text-slate-500 font-semibold">{song.artistName}</p>
+          <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-2 custom-scrollbar">
+            {loading ? (
+              <div className="text-center py-10 font-bold animate-pulse">Yükleniyor...</div>
+            ) : (
+              songs.map((song) => (
+                <div key={song.trackId} className="flex flex-col sm:flex-row sm:items-center gap-4 bg-white/50 p-4 rounded-3xl border border-white/30 hover:bg-white/80 transition-all shadow-sm">
+                  <div className="flex items-center gap-4 flex-1">
+                    <img src={song.artworkUrl100} className="w-14 h-14 rounded-2xl shadow-inner" alt="cover"/>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm truncate text-slate-800">{song.trackName}</p>
+                      <p className="text-[11px] text-slate-500 font-bold">{song.artistName}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Ses Önizleme */}
+                  <div className="flex items-center justify-between gap-3">
+                    {song.previewUrl && (
+                      <audio controls className="h-8 w-32 opacity-80">
+                        <source src={song.previewUrl} type="audio/mpeg" />
+                      </audio>
+                    )}
+                    <button 
+                      onClick={() => addToMood(song)} 
+                      className="bg-indigo-500 text-white text-[10px] font-black px-4 py-2 rounded-full shadow-md hover:bg-indigo-600 transition-all active:scale-90"
+                    >
+                      EKLE
+                    </button>
+                  </div>
                 </div>
-                <button onClick={() => addToMood(song)} className="bg-white/80 text-xs font-bold px-4 py-2 rounded-full shadow-sm hover:bg-white transition">EKLE</button>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
-        <div className="bg-white/50 backdrop-blur-md rounded-[2.5rem] p-6 border border-white/40 shadow-sm h-fit">
-          <h2 className="text-lg font-black mb-6 flex items-center gap-2">🌟 Listem</h2>
-          <div className="space-y-4 max-h-[50vh] overflow-y-auto">
+        {/* SAĞ KOLON: KİŞİSEL LİSTE */}
+        <div className="bg-white/40 backdrop-blur-xl rounded-[3rem] p-8 border border-white/50 shadow-2xl h-fit sticky top-10">
+          <h2 className="text-xl font-black mb-6 flex items-center gap-2">✨ {mood.toUpperCase()} LİSTEM</h2>
+          <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
             {moodSongs.length === 0 ? (
-              <div className="text-center py-10 opacity-40 italic text-sm">Henüz moduna uygun şarkı seçmedin...</div>
+              <div className="text-center py-12 opacity-50 italic text-sm">
+                Henüz şarkı eklemedin, hadi keşfetmeye başla!
+              </div>
             ) : (
               moodSongs.map((song) => (
-                <div key={song.trackId} className="flex items-center gap-4 group">
-                  <img src={song.artworkUrl100} className="w-10 h-10 rounded-lg" alt="cover"/>
+                <div key={song.trackId} className="flex items-center gap-4 group animate-in fade-in slide-in-from-right-4">
+                  <img src={song.artworkUrl100} className="w-12 h-12 rounded-xl" alt="cover"/>
                   <div className="flex-1 border-b border-black/5 pb-2">
-                    <p className="font-bold text-sm text-slate-800">{song.trackName}</p>
-                    <p className="text-[10px] text-slate-500 font-medium">{song.artistName}</p>
+                    <p className="font-bold text-sm text-slate-800 truncate">{song.trackName}</p>
+                    <p className="text-[10px] text-slate-500 font-bold">{song.artistName}</p>
                   </div>
-                  <button onClick={() => removeFromMood(song.trackId)} className="text-red-500 text-[10px] font-bold">SİL</button>
+                  <button 
+                    onClick={() => removeFromMood(song.trackId)} 
+                    className="text-red-400 hover:text-red-600 text-[10px] font-black transition-colors"
+                  >
+                    SİL
+                  </button>
                 </div>
               ))
             )}
