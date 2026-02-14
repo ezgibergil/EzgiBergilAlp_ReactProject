@@ -2,10 +2,10 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 const MOOD_BG = {
-  mutlu: "from-[#FFF9E5] to-[#FFE4B5]", 
-  uzgun: "from-[#E0F2FE] to-[#BAE6FD]", 
-  sakin: "from-[#F0FDF4] to-[#DCFCE7]", 
-  enerjik: "from-[#FFF1F2] to-[#FECDD3]", 
+  mutlu: "from-[#FFF9E5] to-[#FFE4B5]",
+  uzgun: "from-[#E0F2FE] to-[#BAE6FD]",
+  sakin: "from-[#F0FDF4] to-[#DCFCE7]",
+  enerjik: "from-[#FFF1F2] to-[#FECDD3]",
   default: "from-[#F8FAFC] to-[#F1F5F9]"
 };
 
@@ -37,8 +37,8 @@ export default function SongList() {
     localStorage.setItem(`moodSongs-${mood}`, JSON.stringify(moodSongs));
   }, [moodSongs, mood]);
 
-  useEffect(() => { 
-    fetchTopSongs(); 
+  useEffect(() => {
+    fetchTopSongs();
   }, [mood]);
 
   const fetchTopSongs = async () => {
@@ -47,10 +47,10 @@ export default function SongList() {
       const res = await fetch("https://itunes.apple.com/search?term=pop&entity=song&limit=10");
       const data = await res.json();
       setSongs(data.results || []);
-    } catch (err) { 
-      console.error("Hata:", err); 
-    } finally { 
-      setLoading(false); 
+    } catch (err) {
+      console.error("Hata:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,10 +61,10 @@ export default function SongList() {
       const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=10`);
       const data = await res.json();
       setSongs(data.results || []);
-    } catch (err) { 
-      console.error("Hata:", err); 
-    } finally { 
-      setLoading(false); 
+    } catch (err) {
+      console.error("Hata:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,8 +99,8 @@ export default function SongList() {
       </header>
 
       <div className="grid lg:grid-cols-5 gap-12 max-w-7xl mx-auto">
-        
-        
+
+
         <div className="lg:col-span-3 space-y-8">
           <div className="relative group">
             <input
@@ -118,21 +118,21 @@ export default function SongList() {
               songs.map((song) => (
                 <div key={song.trackId} className="flex flex-col md:flex-row md:items-center gap-6 bg-white/40 p-6 rounded-[2.5rem] border border-white/30 hover:bg-white/90 transition-all shadow-md hover:shadow-2xl">
                   <div className="flex items-center gap-5 flex-1">
-                    <img src={song.artworkUrl100} className="w-16 h-16 rounded-[1.2rem] shadow-lg" alt="cover"/>
+                    <img src={song.artworkUrl100} className="w-16 h-16 rounded-[1.2rem] shadow-lg" alt="cover" />
                     <div className="flex-1 min-w-0">
                       <p className="font-black text-lg truncate text-slate-800">{song.trackName}</p>
                       <p className="text-sm text-slate-500 font-bold italic">{song.artistName}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     {song.previewUrl && (
                       <audio controls className="h-8 w-40 opacity-70 hover:opacity-100 transition-opacity">
                         <source src={song.previewUrl} type="audio/mpeg" />
                       </audio>
                     )}
-                    <button 
-                      onClick={() => addToMood(song)} 
+                    <button
+                      onClick={() => addToMood(song)}
                       className="bg-slate-800 text-white text-xs font-black px-6 py-3 rounded-full hover:bg-black transition-all active:scale-95 shadow-lg"
                     >
                       EKLE
@@ -144,13 +144,13 @@ export default function SongList() {
           </div>
         </div>
 
-        
+
         <div className="lg:col-span-2">
           <div className="bg-white/60 backdrop-blur-2xl rounded-[3.5rem] p-10 border border-white/60 shadow-2xl sticky top-12">
             <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
               <span className="text-3xl">🌟</span> FAVORİLERİM
             </h2>
-            
+
             <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-2">
               {moodSongs.length === 0 ? (
                 <div className="text-center py-16 opacity-40 font-medium italic">
@@ -160,19 +160,19 @@ export default function SongList() {
                 moodSongs.map((song) => (
                   <div key={song.trackId} className="space-y-3 bg-white/30 p-5 rounded-3xl border border-white/20 group">
                     <div className="flex items-center gap-4">
-                      <img src={song.artworkUrl100} className="w-12 h-12 rounded-xl shadow-md" alt="cover"/>
+                      <img src={song.artworkUrl100} className="w-12 h-12 rounded-xl shadow-md" alt="cover" />
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm text-slate-800 truncate">{song.trackName}</p>
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider">{song.artistName}</p>
                       </div>
-                      <button 
-                        onClick={() => removeFromMood(song.trackId)} 
+                      <button
+                        onClick={() => removeFromMood(song.trackId)}
                         className="text-red-400 hover:text-red-600 p-2 transition-colors"
                       >
                         ✕
                       </button>
                     </div>
-                    
+
                     {song.previewUrl && (
                       <audio controls className="h-6 w-full opacity-60 hover:opacity-100 transition-all">
                         <source src={song.previewUrl} type="audio/mpeg" />
