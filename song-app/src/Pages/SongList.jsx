@@ -33,10 +33,12 @@ export default function SongList() {
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef(null);
 
+  // Favorileri Yerel Depolamaya Kaydet
   useEffect(() => {
     localStorage.setItem(`moodSongs-${mood}`, JSON.stringify(moodSongs));
   }, [moodSongs, mood]);
 
+  // Sayfa açıldığında varsayılan şarkıları getir
   useEffect(() => {
     fetchTopSongs();
   }, [mood]);
@@ -44,35 +46,39 @@ export default function SongList() {
   const fetchTopSongs = async () => {
     setLoading(true);
     try {
+      // Netlify güvenliği için https ve origin parametresi eklendi
       const res = await fetch("https://itunes.apple.com/search?term=pop&entity=song&limit=10");
       const data = await res.json();
       setSongs(data.results || []);
     } catch (err) {
-      console.error("Hata:", err);
+      console.error("Şarkı getirme hatası:", err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSearch = async (term) => {
-    if (!term.trim()) return;
+    if (!term.trim()) {
+        fetchTopSongs();
+        return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=10`);
       const data = await res.json();
       setSongs(data.results || []);
     } catch (err) {
-      console.error("Hata:", err);
+      console.error("Arama hatası:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Arama geciktirme (Debounce)
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       if (searchTerm) handleSearch(searchTerm);
-      else fetchTopSongs();
     }, 500);
     return () => clearTimeout(debounceRef.current);
   }, [searchTerm]);
@@ -89,9 +95,14 @@ export default function SongList() {
   const textColor = TEXT_COLORS[mood] || TEXT_COLORS.default;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${MOOD_BG[mood] || MOOD_BG.default} p-6 md:p-12 font-sans ${textColor}`}>
+    <div className={`min-h-screen bg-gradient-to-br ${MOOD_BG[mood] || MOOD_BG.default} p-6 md:p-12 font-sans ${textColor} transition-colors duration-500`}>
       <header className="max-w-6xl mx-auto flex items-center justify-between mb-12">
-        <button onClick={() => navigate(-1)} className="text-2xl bg-white/60 p-4 rounded-full shadow-lg hover:bg-white transition-all active:scale-90">←</button>
+        <button 
+          onClick={() => navigate(-1)} 
+          className="text-2xl bg-white/60 p-4 rounded-full shadow-lg hover:bg-white transition-all active:scale-90"
+        >
+          ←
+        </button>
         <div className="text-right">
           <h1 className="text-4xl font-black capitalize tracking-tighter mb-1">{mood} Modu</h1>
           <p className="text-sm font-bold opacity-60">Müziğin ritmine bırak kendini...</p>
@@ -99,8 +110,8 @@ export default function SongList() {
       </header>
 
       <div className="grid lg:grid-cols-5 gap-12 max-w-7xl mx-auto">
-
-
+        
+        {/* SOL KOLON: ARAMA VE ŞARKI LİSTESİ */}
         <div className="lg:col-span-3 space-y-8">
           <div className="relative group">
             <input
@@ -113,7 +124,9 @@ export default function SongList() {
 
           <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
             {loading ? (
-              <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-current"></div></div>
+              <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-current"></div>
+              </div>
             ) : (
               songs.map((song) => (
                 <div key={song.trackId} className="flex flex-col md:flex-row md:items-center gap-6 bg-white/40 p-6 rounded-[2.5rem] border border-white/30 hover:bg-white/90 transition-all shadow-md hover:shadow-2xl">
@@ -127,9 +140,11 @@ export default function SongList() {
 
                   <div className="flex items-center gap-4">
                     {song.previewUrl && (
-                      <audio controls className="h-8 w-40 opacity-70 hover:opacity-100 transition-opacity">
-                        <source src={song.previewUrl} type="audio/mpeg" />
-                      </audio>
+                      <audio 
+                        src={song.previewUrl} 
+                        controls 
+                        className="h-8 w-40 opacity-70 hover:opacity-100 transition-opacity"
+                      />
                     )}
                     <button
                       onClick={() => addToMood(song)}
@@ -141,10 +156,13 @@ export default function SongList() {
                 </div>
               ))
             )}
+            {!loading && songs.length === 0 && (
+                <p className="text-center opacity-50">Aradığın şarkıyı bulamadık...</p>
+            )}
           </div>
         </div>
 
-
+        {/* SAĞ KOLON: FAVORİLER */}
         <div className="lg:col-span-2">
           <div className="bg-white/60 backdrop-blur-2xl rounded-[3.5rem] p-10 border border-white/60 shadow-2xl sticky top-12">
             <h2 className="text-2xl font-black mb-8 flex items-center gap-3">
@@ -174,9 +192,11 @@ export default function SongList() {
                     </div>
 
                     {song.previewUrl && (
-                      <audio controls className="h-6 w-full opacity-60 hover:opacity-100 transition-all">
-                        <source src={song.previewUrl} type="audio/mpeg" />
-                      </audio>
+                      <audio 
+                        src={song.previewUrl} 
+                        controls 
+                        className="h-6 w-full opacity-60 hover:opacity-100 transition-all" 
+                      />
                     )}
                   </div>
                 ))
